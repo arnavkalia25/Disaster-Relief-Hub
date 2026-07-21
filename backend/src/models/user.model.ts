@@ -1,4 +1,5 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
+import bcrypt from "bcryptjs";
 
 export enum UserRole {
   VICTIM = "victim",
@@ -16,19 +17,21 @@ export interface IUser extends Document {
   isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
+
+  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 const userSchema = new Schema<IUser>(
   {
     fullName: {
       type: String,
-      required: true,
+      required: [true, "Full name is required"],
       trim: true,
     },
 
     email: {
       type: String,
-      required: true,
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
@@ -36,7 +39,8 @@ const userSchema = new Schema<IUser>(
 
     password: {
       type: String,
-      required: true,
+      required: [true, "Password is required"],
+      minlength: 6,
     },
 
     role: {
@@ -60,6 +64,23 @@ const userSchema = new Schema<IUser>(
     timestamps: true,
   }
 );
+
+// Hash password before saving
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) {
+    return;
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Compare entered password with hashed password
+userSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", userSchema);
