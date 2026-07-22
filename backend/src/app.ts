@@ -6,6 +6,7 @@ import morgan from "morgan";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import reliefRequestRoutes from "./routes/reliefRequest.routes";
+import resourceRoutes from "./routes/resource.routes";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use("/api/relief-requests", reliefRequestRoutes);
+app.use("/api/resources", resourceRoutes);
 
 app.get("/health", (req, res) => {
   res.status(200).json({
